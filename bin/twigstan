@@ -25,12 +25,12 @@ $output = new ConsoleOutput();
 $defaultConfigurationFile = 'twigstan.php';
 
 $application = new Application();
-$application->add(new VersionCommand());
+$application->addCommand(new VersionCommand());
 $application->setDefaultCommand('analyze');
 $application->getDefinition()->addOption(
     new InputOption('configuration', 'c', InputOption::VALUE_REQUIRED, 'The path to the configuration file', $defaultConfigurationFile),
 );
-$application->add(new LazyCommand(
+$application->addCommand(new LazyCommand(
     'analyze',
     ['analyse'],
     'Analyze Twig templates',
