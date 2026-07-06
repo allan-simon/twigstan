@@ -62,6 +62,7 @@ services:
 	- TwigStan\Processing\Compilation\TwigCompiler
 	- TwigStan\Processing\Compilation\TwigVisitor\DisableGetAttributeOptimizationVisitor
 	- TwigStan\Processing\Compilation\TwigVisitor\RemoveProfilingNodeVisitor
+	- TwigStan\Processing\Compilation\TwigVisitor\ReplaceComponentPropsNodeVisitor
 	- TwigStan\Processing\Compilation\TwigVisitor\ReplaceIncludeNodeNodeVisitor
 	- TwigStan\Processing\Compilation\TwigVisitor\MarkNameExpressionAsAlwaysDefinedVisitor
 	- TwigStan\Processing\Compilation\TwigVisitor\ReplaceTypesNodeVisitor

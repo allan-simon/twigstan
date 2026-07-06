@@ -25,3 +25,15 @@ parameters:
 		-
 			identifier: method.internal
 			message: '#Twig\\Environment\:\:getTemplateClass\(\)#'
+		# Supporting TwigComponent's `<twig:x>` syntax requires consuming its Twig
+		# internals: PropsNode (replaced at compilation) and the lexer/extension pair
+		# that TwigComponentBundle would normally register (tests/twig-loader.php).
+		-
+			identifier: classConstant.internalClass
+			message: '#Symfony\\UX\\TwigComponent#'
+		-
+			identifier: instanceof.internalClass
+			message: '#Symfony\\UX\\TwigComponent#'
+		-
+			identifier: new.internalClass
+			message: '#Symfony\\UX\\TwigComponent#'

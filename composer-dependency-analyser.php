@@ -29,6 +29,16 @@ $config->ignoreErrorsOnPackagesAndPaths(
     [ErrorType::DEV_DEPENDENCY_IN_PROD],
 );
 
+$config->ignoreErrorsOnPackagesAndPaths(
+    [
+        'symfony/ux-twig-component',
+    ],
+    [
+        __DIR__ . '/src/Processing/Compilation/TwigVisitor/ReplaceComponentPropsNodeVisitor.php',
+    ],
+    [ErrorType::DEV_DEPENDENCY_IN_PROD],
+);
+
 // TODO: shipmonk-rnd/composer-dependency-analyser#202
 $config->ignoreErrorsOnPackage(
     'symfony/polyfill-php84',

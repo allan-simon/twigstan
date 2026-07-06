@@ -18,8 +18,10 @@ use TwigStan\PHP\StrictPhpParser;
 use TwigStan\Processing\Compilation\Parser\TwigNodeParser;
 use TwigStan\Processing\Compilation\PhpVisitor\AddExtraLineNumberCommentVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\AddGetExtensionMethodVisitor;
+use TwigStan\Processing\Compilation\PhpVisitor\AddLineCommentToComponentEmbedVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\AddTypeCommentsToTemplateVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\AppendFilePathToLineCommentVisitor;
+use TwigStan\Processing\Compilation\PhpVisitor\CastComponentEmbeddedTemplateIndexVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\IgnoreArgumentTemplateTypeOnEnsureTraversableVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\MakeFinalVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\RefactorExtensionCallVisitor;
@@ -74,9 +76,11 @@ final readonly class TwigCompiler
             new MakeFinalVisitor(),
             new AddExtraLineNumberCommentVisitor(),
             new AppendFilePathToLineCommentVisitor($twigFilePath),
+            new AddLineCommentToComponentEmbedVisitor(),
             new RemoveImportsVisitor(),
             new AddTypeCommentsToTemplateVisitor($this->templateContextToArrayShape->getByTemplate($templateContext, $twigFilePath)),
             new IgnoreArgumentTemplateTypeOnEnsureTraversableVisitor(),
+            new CastComponentEmbeddedTemplateIndexVisitor(),
             new RemoveLineNumberFromGetAttributeCallVisitor(),
             new RemoveStringCastFromYieldVisitor(),
             new AddGetExtensionMethodVisitor(),
