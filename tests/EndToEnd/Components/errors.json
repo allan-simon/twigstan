@@ -1,0 +1,14 @@
+{
+    "errors": [
+        {
+            "message": "Variable 'title' does not exist.",
+            "identifier": "offsetAccess.notFound",
+            "tip": null,
+            "twigSourceLocation": "components/Broken.html.twig:1",
+            "renderPoints": [
+                "homepage.twig:12"
+            ]
+        }
+    ],
+    "fileSpecificErrors": []
+}

@@ -1,0 +1,48 @@
+{
+    "homepage.twig": [
+        [
+            "Controller.php:13",
+            "array{body: 'Welcome to the homepage', name: string|null}"
+        ]
+    ],
+    "page.twig": [
+        [
+            "Controller.php:21",
+            "array{total: int}"
+        ]
+    ],
+    "components/Alert.html.twig": [
+        [
+            "homepage.twig:1",
+            "array{message: 'Hello'}"
+        ],
+        [
+            "homepage.twig:2",
+            "array{message: 'Welcome to the homepage', variant: 'danger', data-testid: 'alert'}"
+        ],
+        [
+            "homepage.twig:6",
+            "array{message: 'nested'}"
+        ],
+        [
+            "page.twig:4",
+            "array{message: 'many'|'one'}"
+        ]
+    ],
+    "components/sub/Chip.html.twig": [
+        [
+            "components/Alert.html.twig:8",
+            "array{label: 'danger'|'info'}"
+        ],
+        [
+            "homepage.twig:11",
+            "array{label: 'One', data-size: 'lg'}"
+        ]
+    ],
+    "components/Broken.html.twig": [
+        [
+            "homepage.twig:12",
+            "array{}"
+        ]
+    ]
+}

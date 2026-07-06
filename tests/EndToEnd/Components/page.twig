@@ -1,0 +1,9 @@
+{% extends 'EndToEnd/Components/layout.twig' %}
+
+{% block main %}
+    <twig:Alert message="{{ total > 1 ? 'many' : 'one' }}">
+        {# The context of the enclosing block flows into the component body. #}
+        {% assert_type total 'int' %}
+        Count: {{ total }}
+    </twig:Alert>
+{% endblock %}

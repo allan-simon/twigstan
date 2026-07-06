@@ -1,0 +1,9 @@
+{% props message, variant = 'info' %}
+{% assert_type message "'Hello'|'many'|'nested'|'one'|'Welcome to the homepage'" %}
+{% assert_type variant "'danger'|'info'" %}
+{% assert_type attributes 'Symfony\\UX\\TwigComponent\\ComponentAttributes' %}
+<div class="alert alert-{{ variant }}" {{ attributes }}>
+    <strong>{{ message }}</strong>
+    {% block content %}{% endblock %}
+    <twig:sub:Chip label="{{ variant }}" />
+</div>

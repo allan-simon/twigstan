@@ -1,0 +1,12 @@
+<twig:Alert message="Hello" />
+<twig:Alert message="{{ body }}" variant="danger" data-testid="alert">
+    {% assert_type name 'string|null' %}
+    {% assert_type variant "'danger'" %}
+    Written by {{ name }}
+    <twig:Alert message="nested">
+        {% assert_type name 'string|null' %}
+        Nested for {{ name }}
+    </twig:Alert>
+</twig:Alert>
+<twig:sub:Chip label="One" data-size="lg" />
+<twig:Broken />
