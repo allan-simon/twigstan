@@ -1,0 +1,12 @@
+{
+    "errors": [
+        {
+            "message": "Variable 'lable' does not exist.",
+            "identifier": "offsetAccess.notFound",
+            "tip": null,
+            "twigSourceLocation": "theme.html.twig:36",
+            "renderPoints": []
+        }
+    ],
+    "fileSpecificErrors": []
+}
