@@ -1,3 +1,19 @@
+> [!IMPORTANT]
+> **This is a fork** of [twigstan/twigstan](https://github.com/twigstan/twigstan), created and written by
+> **[Ruud Kamphuis](https://github.com/ruudk)** — all credit for the concept, architecture and the vast
+> majority of the code goes to him and the upstream contributors (MIT license, © 2024 Ruud Kamphuis).
+>
+> This fork is maintained for the needs of the Spotipharm project and adds, on top of upstream `main`:
+>
+> - compatibility with **Symfony 8 / PHP 8.5** ([upstream #277](https://github.com/twigstan/twigstan/issues/277)),
+>   **PHPStan 2.2** (building on [upstream PR #279](https://github.com/twigstan/twigstan/pull/279) by its author)
+>   and **Twig 3.27+** compiled-code drift;
+> - support for **anonymous [symfony/ux-twig-component](https://symfony.com/bundles/ux-twig-component/current/index.html)
+>   components** (`<twig:x>`): props/defaults, required-prop detection, `attributes`, embedded bodies —
+>   what [upstream #230](https://github.com/twigstan/twigstan/issues/230) asks for.
+>
+> These changes are meant to be offered upstream if the project becomes active again.
+
 <p align="center">
     <img src="https://avatars.githubusercontent.com/u/179125187?s=200&v=4" alt="Logo" width=100><br>
     <strong>TwigStan</strong> is a static analyzer for <a href="https://twig.symfony.com">Twig</a> templates powered by <a href="https://phpstan.org">PHPStan</a>.
