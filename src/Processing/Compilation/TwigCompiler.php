@@ -27,6 +27,7 @@ use TwigStan\Processing\Compilation\PhpVisitor\AddTypeCommentsToTemplateVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\AppendFilePathToLineCommentVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\CastComponentEmbeddedTemplateIndexVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\IgnoreArgumentTemplateTypeOnEnsureTraversableVisitor;
+use TwigStan\Processing\Compilation\PhpVisitor\IgnoreDecidableIsIterableOnWithGuardVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\MakeFinalVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\RefactorExtensionCallVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\RefactorLoopClosureVisitor;
@@ -90,6 +91,7 @@ final readonly class TwigCompiler
                 $this->templateContextToArrayShape->getByTemplate($templateContext, $twigFilePath),
             )),
             new IgnoreArgumentTemplateTypeOnEnsureTraversableVisitor(),
+            new IgnoreDecidableIsIterableOnWithGuardVisitor(),
             new CastComponentEmbeddedTemplateIndexVisitor(),
             new RemoveLineNumberFromGetAttributeCallVisitor(),
             new RemoveStringCastFromYieldVisitor(),
