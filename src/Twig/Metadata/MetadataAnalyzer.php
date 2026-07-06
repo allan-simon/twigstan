@@ -51,11 +51,23 @@ final readonly class MetadataAnalyzer
         foreach ($template->getNode('traits') as $trait) {
             $targets = [];
             foreach ($trait->getNode('targets') as $blockName => $target) {
-                $targets[$blockName] = $target->getAttribute('value');
+                $targetName = $target->getAttribute('value');
+
+                if ( ! is_string($targetName)) {
+                    throw new RuntimeException(sprintf('Expected trait target to be a string, got %s.', get_debug_type($targetName)));
+                }
+
+                $targets[(string) $blockName] = $targetName;
+            }
+
+            $traitName = $trait->getNode('template')->getAttribute('value');
+
+            if ( ! is_string($traitName)) {
+                throw new RuntimeException(sprintf('Expected trait template name to be a string, got %s.', get_debug_type($traitName)));
             }
 
             $traits[] = [
-                'name' => $trait->getNode('template')->getAttribute('value'),
+                'name' => $traitName,
                 'targets' => $targets,
             ];
         }

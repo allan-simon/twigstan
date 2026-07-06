@@ -16,3 +16,12 @@ parameters:
 	dynamicConstantNames:
 		- Twig\Environment::MAJOR_VERSION
 		- Twig\Environment::VERSION_ID
+	ignoreErrors:
+		# TwigStan's whole purpose is to analyze compiled Twig templates: it deliberately
+		# consumes Twig internals (Twig\Template and its constants, Environment::getTemplateClass()).
+		-
+			identifier: classConstant.internalClass
+			message: '#internal class Twig\\Template#'
+		-
+			identifier: method.internal
+			message: '#Twig\\Environment\:\:getTemplateClass\(\)#'

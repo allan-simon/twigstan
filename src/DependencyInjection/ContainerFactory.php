@@ -128,6 +128,8 @@ final readonly class ContainerFactory
 
         $container = new $class();
 
+        // The class name comes from generated code; keep validating it at runtime.
+        // @phpstan-ignore instanceof.alwaysTrue
         if ( ! $container instanceof Container) {
             throw new RuntimeException('Container is not an instance of Nette\DI\Container.');
         }

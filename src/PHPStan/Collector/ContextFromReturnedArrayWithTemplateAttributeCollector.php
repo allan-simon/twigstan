@@ -10,7 +10,6 @@ use PHPStan\Node\MethodReturnStatementsNode;
 use PHPStan\PhpDocParser\Printer\Printer;
 use PHPStan\Reflection\ClassReflection;
 use Symfony\Bridge\Twig\Attribute\Template;
-use Symfony\Component\Routing\Annotation\Route as LegacyRoute;
 use Symfony\Component\Routing\Attribute\Route;
 use TwigStan\Twig\SourceLocation;
 
@@ -83,7 +82,9 @@ final readonly class ContextFromReturnedArrayWithTemplateAttributeCollector impl
                 return true;
             }
 
-            if ($attribute->getName() === LegacyRoute::class) {
+            // The legacy annotation class was removed in Symfony 8, but the analyzed
+            // project may still use it with an older Symfony version.
+            if ($attribute->getName() === 'Symfony\Component\Routing\Annotation\Route') {
                 return true;
             }
         }

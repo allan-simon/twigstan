@@ -153,9 +153,9 @@ final readonly class ErrorHelper
      * @return array{
      *     errors: list<array{
      *          message: string,
-     *          identifier: string|null,
-     *          tip: string|null,
-     *          twigSourceLocation: string|null,
+     *          identifier: null|string,
+     *          tip: null|string,
+     *          twigSourceLocation: null|string,
      *          renderPoints: array<string>,
      *     }>,
      *     fileSpecificErrors: list<string>,
@@ -175,9 +175,9 @@ final readonly class ErrorHelper
     /**
      * @return array{
      *      message: string,
-     *      identifier: string|null,
-     *      tip: string|null,
-     *      twigSourceLocation: string|null,
+     *      identifier: null|string,
+     *      tip: null|string,
+     *      twigSourceLocation: null|string,
      *      renderPoints: array<string>,
      * }
      */

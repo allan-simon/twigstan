@@ -409,6 +409,8 @@ final class ConfigBuilder
     public function twigContextCollector(string ...$classNames): self
     {
         foreach ($classNames as $className) {
+            // The PHPDoc type is not enforced at runtime; keep validating the user-provided configuration.
+            // @phpstan-ignore function.alreadyNarrowedType
             if ( ! is_a($className, TemplateContextCollector::class, true)) {
                 throw new RuntimeException(sprintf('Class %s does not implement %s interface.', $className, TemplateContextCollector::class));
             }

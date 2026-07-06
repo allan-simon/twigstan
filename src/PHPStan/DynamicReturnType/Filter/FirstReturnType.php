@@ -50,6 +50,8 @@ final readonly class FirstReturnType implements DynamicStaticMethodReturnTypeExt
             ]));
         }
 
+        // There is no non-deprecated API that keeps the first/last element precision.
+        // @phpstan-ignore method.deprecated
         return $argType->getFirstIterableValueType();
     }
 }
