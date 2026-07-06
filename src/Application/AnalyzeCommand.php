@@ -389,6 +389,13 @@ final class AnalyzeCommand extends Command
             // isset() even when the sequence is statically known to be countable.
             IgnoreError::messageAndIdentifier("#Offset 'revindex0?' .* in isset\(\) always exists and is not nullable\.#", 'isset.offset'),
 
+            // Twig's compiled for-loop saves/restores the context through
+            // $context['_parent']. On a large context (union of many render
+            // points) PHPStan's loop widening generalizes the shape and loses
+            // that bookkeeping key, flagging the restore. The unset() half of
+            // the same pattern is already covered by unset.offset below.
+            IgnoreError::messageAndIdentifier("#Offset '_parent' does not exist#", 'offsetAccess.notFound'),
+
             // These identifiers don't make sense for compiled Twig templates.
             IgnoreError::identifier('missingType.checkedException'),
             IgnoreError::identifier('missingType.parameter'),
