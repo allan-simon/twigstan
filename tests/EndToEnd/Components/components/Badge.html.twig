@@ -1,0 +1,6 @@
+{% props label, icon = null %}
+{% assert_type icon "'star'|null" %}
+{% if icon is not null %}
+    <i class="icon-{{ icon }}"></i>
+{% endif %}
+<span class="badge" {{ attributes }}>{{ label }}</span>

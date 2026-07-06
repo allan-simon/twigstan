@@ -8,6 +8,10 @@ use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
+use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
@@ -29,8 +33,10 @@ use TwigStan\Processing\Compilation\PhpVisitor\RefactorLoopClosureVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\RemoveImportsVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\RemoveLineNumberFromGetAttributeCallVisitor;
 use TwigStan\Processing\Compilation\PhpVisitor\RemoveStringCastFromYieldVisitor;
+use TwigStan\Processing\Compilation\TwigVisitor\AnalyzableComponentPropsNode;
 use TwigStan\Processing\TemplateContext;
 use TwigStan\Processing\TemplateContextToArrayShape;
+use TwigStan\Twig\Node\NodeFinder;
 
 final readonly class TwigCompiler
 {
@@ -41,6 +47,7 @@ final readonly class TwigCompiler
         private ModifiedCompiler $compiler,
         private StrictPhpParser $phpParser,
         private TemplateContextToArrayShape $templateContextToArrayShape,
+        private NodeFinder $nodeFinder,
     ) {}
 
     public function compile(ModuleNode | string $template, string $targetDirectory, TemplateContext $templateContext, int $run): CompilationResult
@@ -78,7 +85,10 @@ final readonly class TwigCompiler
             new AppendFilePathToLineCommentVisitor($twigFilePath),
             new AddLineCommentToComponentEmbedVisitor(),
             new RemoveImportsVisitor(),
-            new AddTypeCommentsToTemplateVisitor($this->templateContextToArrayShape->getByTemplate($templateContext, $twigFilePath)),
+            new AddTypeCommentsToTemplateVisitor($this->makeDefaultedPropsOptional(
+                $twigNode,
+                $this->templateContextToArrayShape->getByTemplate($templateContext, $twigFilePath),
+            )),
             new IgnoreArgumentTemplateTypeOnEnsureTraversableVisitor(),
             new CastComponentEmbeddedTemplateIndexVisitor(),
             new RemoveLineNumberFromGetAttributeCallVisitor(),
@@ -105,6 +115,50 @@ final readonly class TwigCompiler
             $twigFilePath,
             $phpFile,
         );
+    }
+
+    /**
+     * A prop declared with a default in `{% props %}` is optional by contract:
+     * even when every current usage site passes it, a future one may omit it.
+     * Marking the key optional in the collected context keeps the compiled
+     * `$context['prop'] ??= default;` meaningful, so the prop's type includes
+     * the default instead of degrading guards like `{% if prop is not null %}`
+     * into always-false comparisons.
+     */
+    private function makeDefaultedPropsOptional(ModuleNode $twigNode, ArrayShapeNode $context): ArrayShapeNode
+    {
+        $propsNode = $this->nodeFinder->findFirstInstanceOf($twigNode, AnalyzableComponentPropsNode::class);
+
+        if ( ! $propsNode instanceof AnalyzableComponentPropsNode) {
+            return $context;
+        }
+
+        $namesWithDefault = $propsNode->getNamesWithDefault();
+
+        if ($namesWithDefault === []) {
+            return $context;
+        }
+
+        $items = array_map(
+            function (ArrayShapeItemNode $item) use ($namesWithDefault) {
+                $name = match (true) {
+                    $item->keyName instanceof ConstExprStringNode => $item->keyName->value,
+                    $item->keyName instanceof IdentifierTypeNode => $item->keyName->name,
+                    default => null,
+                };
+
+                if ($item->optional || $name === null || ! in_array($name, $namesWithDefault, true)) {
+                    return $item;
+                }
+
+                return new ArrayShapeItemNode($item->keyName, true, $item->valueType);
+            },
+            $context->items,
+        );
+
+        return $context->sealed
+            ? ArrayShapeNode::createSealed($items, $context->kind)
+            : ArrayShapeNode::createUnsealed($items, $context->unsealedType, $context->kind);
     }
 
     /**

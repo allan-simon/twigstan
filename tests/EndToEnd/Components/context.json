@@ -39,6 +39,12 @@
             "array{label: 'One', data-size: 'lg'}"
         ]
     ],
+    "components/Badge.html.twig": [
+        [
+            "homepage.twig:14",
+            "array{label: 'New', icon: 'star'}"
+        ]
+    ],
     "components/Broken.html.twig": [
         [
             "homepage.twig:12",

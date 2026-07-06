@@ -38,6 +38,23 @@ final class AnalyzableComponentPropsNode extends Node
         parent::__construct($values, ['names' => $propsNames], $lineno);
     }
 
+    /**
+     * Names of the props declared with a default value.
+     *
+     * @return list<string>
+     */
+    public function getNamesWithDefault(): array
+    {
+        $names = [];
+        foreach ($this->getAttribute('names') as $name) {
+            if ($this->hasNode($name)) {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
+    }
+
     public function compile(Compiler $compiler): void
     {
         $compiler->addDebugInfo($this);
