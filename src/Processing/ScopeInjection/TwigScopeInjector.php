@@ -20,8 +20,10 @@ use TwigStan\PHP\PrettyPrinter;
 use TwigStan\PHP\StrictPhpParser;
 use TwigStan\PHPStan\Analysis\CollectedData;
 use TwigStan\PHPStan\Collector\BlockContextCollector;
+use TwigStan\PHPStan\Collector\ComponentEmbedContextCollector;
 use TwigStan\PHPStan\Collector\MacroCollector;
 use TwigStan\Processing\Flattening\FlatteningResultCollection;
+use TwigStan\Processing\ScopeInjection\PhpVisitor\InjectComponentEmbeddedContextVisitor;
 use TwigStan\Processing\ScopeInjection\PhpVisitor\InjectContextVisitor;
 use TwigStan\Processing\ScopeInjection\PhpVisitor\InjectMacroVisitor;
 use TwigStan\Processing\ScopeInjection\PhpVisitor\PhpToTemplateLinesNodeVisitor;
@@ -35,6 +37,15 @@ use TwigStan\Twig\SourceLocation;
  *      parent: bool,
  *      relatedBlockName: null|string,
  *      relatedParent: bool,
+ * }
+ * @phpstan-type EmbedContextData = array{
+ *      blockName: null|string,
+ *      sourceLocation: SourceLocation,
+ *      context: ArrayShapeNode,
+ *      parent: bool,
+ *      relatedBlockName: null|string,
+ *      relatedParent: bool,
+ *      relatedEmbeddedTemplateIndex: null|int,
  * }
  */
 final class TwigScopeInjector
@@ -63,6 +74,7 @@ final class TwigScopeInjector
         $this->filesystem->mkdir($targetDirectory);
 
         $contextBeforeBlockByFilename = [];
+        $componentEmbedContextByFilename = [];
         $macros = [];
 
         foreach ($collectedData as $data) {
@@ -76,20 +88,7 @@ final class TwigScopeInjector
                 // PHPStan aggregates collector results per file: $data->data is a list of
                 // ContextData node results.
                 foreach ($data->data as $blockData) {
-                    $phpDocNode = $this->phpDocParser->parseTagValue(
-                        new TokenIterator($this->lexer->tokenize($blockData['context'])),
-                        '@var',
-                    );
-
-                    if ( ! $phpDocNode instanceof VarTagValueNode) {
-                        throw new LogicException('Invalid @var tag.');
-                    }
-
-                    $context = $phpDocNode->type;
-
-                    if ( ! $context instanceof ArrayShapeNode) {
-                        $context = ArrayShapeNode::createSealed([]);
-                    }
+                    $context = $this->parseArrayShape($blockData['context']) ?? ArrayShapeNode::createSealed([]);
 
                     $sourceLocation = SourceLocation::decode($blockData['sourceLocation']);
 
@@ -102,6 +101,26 @@ final class TwigScopeInjector
                         'relatedParent' => $blockData['relatedParent'],
                     ];
                 }
+            } elseif ($data->collecterType === ComponentEmbedContextCollector::class) {
+                // PHPStan aggregates collector results per file: $data->data is a list of
+                // ComponentEmbedContextData node results.
+                foreach ($data->data as $embedData) {
+                    $context = $this->parseArrayShape($embedData['context']);
+
+                    if ($context === null) {
+                        continue;
+                    }
+
+                    $componentEmbedContextByFilename[$data->filePath][$embedData['embeddedTemplateIndex']] = [
+                        'blockName' => null,
+                        'sourceLocation' => SourceLocation::decode($embedData['sourceLocation']),
+                        'context' => $context,
+                        'parent' => false,
+                        'relatedBlockName' => $embedData['relatedBlockName'],
+                        'relatedParent' => $embedData['relatedParent'],
+                        'relatedEmbeddedTemplateIndex' => $embedData['relatedEmbeddedTemplateIndex'],
+                    ];
+                }
             }
         }
 
@@ -110,6 +129,21 @@ final class TwigScopeInjector
         foreach ($contextBeforeBlockByFilename as $contexts) {
             foreach ($contexts as $context) {
                 $contextBeforeBlock[] = $this->getRecursiveContext($context, $contextBeforeBlockByFilename);
+            }
+        }
+
+        // When the component usage sits inside a block (or inside the body of
+        // another component), complete the embedded context with the
+        // (recursively resolved) context of that block or enclosing embed.
+        $componentEmbedContext = [];
+        foreach ($componentEmbedContextByFilename as $phpFile => $embedContexts) {
+            foreach (array_keys($embedContexts) as $embeddedTemplateIndex) {
+                $componentEmbedContext[$phpFile][$embeddedTemplateIndex] = $this->getRecursiveEmbedContext(
+                    $phpFile,
+                    $embeddedTemplateIndex,
+                    $componentEmbedContextByFilename,
+                    $contextBeforeBlockByFilename,
+                );
             }
         }
 
@@ -125,6 +159,9 @@ final class TwigScopeInjector
                 new InjectContextVisitor(
                     $contextBeforeBlockRelatedToTemplate,
                     $this->arrayShapeMerger,
+                ),
+                new InjectComponentEmbeddedContextVisitor(
+                    $componentEmbedContext[$flatteningResult->phpFile] ?? [],
                 ),
                 ...isset($macros[$flatteningResult->phpFile]) ? [new InjectMacroVisitor($macros[$flatteningResult->phpFile])] : [],
             );
@@ -155,6 +192,69 @@ final class TwigScopeInjector
     }
 
     /**
+     * Resolves the full context of an embedded component class: its own
+     * collected context, completed with the context of the enclosing embed
+     * (nested components) or of the enclosing block.
+     *
+     * @param array<string, array<int, EmbedContextData>> $componentEmbedContextByFilename
+     * @param array<string, array<ContextData>> $contextBeforeBlockByFilename
+     * @param array<int, true> $visited
+     */
+    private function getRecursiveEmbedContext(
+        string $phpFile,
+        int $embeddedTemplateIndex,
+        array $componentEmbedContextByFilename,
+        array $contextBeforeBlockByFilename,
+        array $visited = [],
+    ): ArrayShapeNode {
+        $embedContext = $componentEmbedContextByFilename[$phpFile][$embeddedTemplateIndex];
+
+        $relatedIndex = $embedContext['relatedEmbeddedTemplateIndex'];
+
+        if ($relatedIndex !== null
+            && $relatedIndex !== $embeddedTemplateIndex
+            && ! isset($visited[$relatedIndex])
+            && isset($componentEmbedContextByFilename[$phpFile][$relatedIndex])
+        ) {
+            $enclosingContext = $this->getRecursiveEmbedContext(
+                $phpFile,
+                $relatedIndex,
+                $componentEmbedContextByFilename,
+                $contextBeforeBlockByFilename,
+                $visited + [$embeddedTemplateIndex => true],
+            );
+
+            return $this->arrayShapeMerger->merge($embedContext['context'], $enclosingContext, true);
+        }
+
+        unset($embedContext['relatedEmbeddedTemplateIndex']);
+
+        return $this->getRecursiveContext($embedContext, $contextBeforeBlockByFilename)['context'];
+    }
+
+    /**
+     * Parses a context printed by a collector back into an array shape.
+     * Returns null when the context is not an array shape (e.g. a general array).
+     */
+    private function parseArrayShape(string $context): ?ArrayShapeNode
+    {
+        $phpDocNode = $this->phpDocParser->parseTagValue(
+            new TokenIterator($this->lexer->tokenize($context)),
+            '@var',
+        );
+
+        if ( ! $phpDocNode instanceof VarTagValueNode) {
+            throw new LogicException('Invalid @var tag.');
+        }
+
+        if ( ! $phpDocNode->type instanceof ArrayShapeNode) {
+            return null;
+        }
+
+        return $phpDocNode->type;
+    }
+
+    /**
      * @param ContextData $context
      * @param array<array<ContextData>> $contextBeforeBlockByFilename
      *
@@ -182,7 +282,7 @@ final class TwigScopeInjector
             $parentContext = $this->cachedParentContext[$cacheKey];
         } else {
             $parentContext = null;
-            foreach ($contextBeforeBlockByFilename[$file] as $fileContext) {
+            foreach ($contextBeforeBlockByFilename[$file] ?? [] as $fileContext) {
                 if ($relatedBlockName !== $fileContext['blockName'] || $relatedParent !== $fileContext['parent']) {
                     continue;
                 }
