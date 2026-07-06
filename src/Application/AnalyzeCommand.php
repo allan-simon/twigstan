@@ -380,6 +380,10 @@ final class AnalyzeCommand extends Command
             // Therefore this is a non-issue in Twig templates.
             IgnoreError::identifier('foreach.valueOverwrite'),
 
+            // Twig's compiled for-loop bookkeeping guards the revindex counters with
+            // isset() even when the sequence is statically known to be countable.
+            IgnoreError::messageAndIdentifier("#Offset 'revindex0?' .* in isset\(\) always exists and is not nullable\.#", 'isset.offset'),
+
             // These identifiers don't make sense for compiled Twig templates.
             IgnoreError::identifier('missingType.checkedException'),
             IgnoreError::identifier('missingType.parameter'),

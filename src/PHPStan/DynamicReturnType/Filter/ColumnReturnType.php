@@ -30,6 +30,8 @@ final readonly class ColumnReturnType implements DynamicStaticMethodReturnTypeEx
         StaticCall $methodCall,
         Scope $scope,
     ): Type {
-        return $scope->getType(new FuncCall(new Name('array_column'), $methodCall->args));
+        // Twig >= 3.27 compiles this filter with a (Environment $env, bool $isSandboxed) prefix,
+        // the remaining arguments match array_column().
+        return $scope->getType(new FuncCall(new Name('array_column'), array_slice($methodCall->args, 2)));
     }
 }

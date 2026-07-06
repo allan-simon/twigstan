@@ -35,6 +35,8 @@ final readonly class FilterReturnType implements DynamicStaticMethodReturnTypeEx
         $args = $methodCall->args;
 
         if (Environment::MAJOR_VERSION === 3) {
+            // Twig >= 3.27 compiles this filter with a (Environment $env, bool $isSandboxed) prefix.
+            array_shift($args);
             array_shift($args);
         }
 
