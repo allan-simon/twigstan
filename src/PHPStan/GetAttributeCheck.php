@@ -210,8 +210,8 @@ final readonly class GetAttributeCheck
 
             // object property
             // vendor/twig/twig/src/Extension/CoreExtension.php:1728
-            if ($objectType->hasProperty($propertyOrMethod)->yes()) {
-                $property = $objectType->getProperty($propertyOrMethod, $scope);
+            if ($objectType->hasInstanceProperty($propertyOrMethod)->yes()) {
+                $property = $objectType->getInstanceProperty($propertyOrMethod, $scope);
 
                 if ($property->isPublic()) {
                     return [$property->getReadableType(), []];
@@ -246,7 +246,7 @@ final readonly class GetAttributeCheck
 
                 $methodName = $prefix . $propertyOrMethod;
                 // @phpstan-ignore phpstanApi.method
-                [, $methodReflection] = $this->methodCallCheck->check($scope, $methodName, new TypeExpr($objectType));
+                [, $methodReflection] = $this->methodCallCheck->check($scope, $methodName, new TypeExpr($objectType), new Identifier($methodName));
 
                 if ($methodReflection === null) {
                     continue;
@@ -268,6 +268,9 @@ final readonly class GetAttributeCheck
                         // @phpstan-ignore phpstanApi.method
                         ...$this->prefixErrorIdentifier($this->parametersCheck->check(
                             $parametersAcceptor,
+                            // At runtime the scope is a MutatingScope, which implements the
+                            // NodeCallbackInvoker and CollectedDataEmitter interfaces required since PHPStan 2.2.
+                            // @phpstan-ignore argument.type
                             $scope,
                             $declaringClass->isBuiltin(),
                             new Expr\MethodCall(
@@ -292,6 +295,10 @@ final readonly class GetAttributeCheck
                             'Return type of call to method ' . $messagesMethodName . ' contains unresolvable type.',
                             '%s of method ' . $messagesMethodName . ' contains unresolvable type.',
                             'Method ' . $messagesMethodName . ' invoked with %s, but it\'s not allowed because of @no-named-arguments.',
+                            'Constant %s is not allowed for %s of method ' . $messagesMethodName . '.',
+                            'Constants %s cannot be combined for %s of method ' . $messagesMethodName . '.',
+                            'Combining constants with | is not allowed for %s of method ' . $messagesMethodName . '.',
+                            ! $methodReflection->isPrivate() && ! $declaringClass->isFinal() ? [$declaringClass->getName(), $methodReflection->getName()] : null,
                         )),
                     ],
                 ];
