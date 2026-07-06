@@ -62,6 +62,7 @@ final class TwigScopeInjector
         private readonly ArrayShapeMerger $arrayShapeMerger,
         private readonly PhpDocParser $phpDocParser,
         private readonly Lexer $lexer,
+        private readonly FormThemeContext $formThemeContext,
     ) {}
 
     /**
@@ -158,6 +159,7 @@ final class TwigScopeInjector
                 new NameResolver(),
                 new InjectContextVisitor(
                     $contextBeforeBlockRelatedToTemplate,
+                    $this->formThemeContext->getContext($flatteningResult->twigFilePath),
                     $this->arrayShapeMerger,
                 ),
                 new InjectComponentEmbeddedContextVisitor(

@@ -10,7 +10,11 @@
 >   and **Twig 3.27+** compiled-code drift;
 > - support for **anonymous [symfony/ux-twig-component](https://symfony.com/bundles/ux-twig-component/current/index.html)
 >   components** (`<twig:x>`): props/defaults, required-prop detection, `attributes`, embedded bodies —
->   what [upstream #230](https://github.com/twigstan/twigstan/issues/230) asks for.
+>   what [upstream #230](https://github.com/twigstan/twigstan/issues/230) asks for;
+> - support for **Symfony form themes**: the blocks of a template whose `{% use %}`/`{% extends %}` chain
+>   reaches a built-in theme of symfony/twig-bridge are analyzed with the context that
+>   `FormRenderer` injects at runtime (`form`, `attr`, `errors`, `label`, ... — see
+>   [FormThemeContext](src/Processing/ScopeInjection/FormThemeContext.php)).
 >
 > These changes are meant to be offered upstream if the project becomes active again.
 

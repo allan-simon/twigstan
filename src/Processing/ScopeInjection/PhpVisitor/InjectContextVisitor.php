@@ -19,9 +19,11 @@ final class InjectContextVisitor extends NodeVisitorAbstract
 {
     /**
      * @param list<ContextData> $contextBeforeBlock
+     * @param null|ArrayShapeNode $formThemeContext the FormRenderer contract, when the template is a form theme
      */
     public function __construct(
         private readonly array $contextBeforeBlock,
+        private readonly ?ArrayShapeNode $formThemeContext,
         private readonly ArrayShapeMerger $arrayShapeMerger,
     ) {}
 
@@ -93,6 +95,15 @@ final class InjectContextVisitor extends NodeVisitorAbstract
             }
 
             $context = $this->arrayShapeMerger->merge($context, $contextBeforeBlock['context']);
+        }
+
+        // The blocks of a form theme are called at runtime by FormRenderer with
+        // the FormView variables: complete whatever was statically collected
+        // (globals, `block()` call sites) with that contract.
+        if ($this->formThemeContext !== null) {
+            $context = $context === null
+                ? $this->formThemeContext
+                : $this->arrayShapeMerger->merge($context, $this->formThemeContext, true);
         }
 
         return $context ?? ArrayShapeNode::createSealed([]);

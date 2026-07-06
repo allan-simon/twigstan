@@ -20,6 +20,16 @@ $config->ignoreErrorsOnPackagesAndPaths(
 
 $config->ignoreErrorsOnPackagesAndPaths(
     [
+        'symfony/form',
+    ],
+    [
+        __DIR__ . '/src/Processing/ScopeInjection/FormThemeContext.php',
+    ],
+    [ErrorType::DEV_DEPENDENCY_IN_PROD],
+);
+
+$config->ignoreErrorsOnPackagesAndPaths(
+    [
         'symfony/routing',
         'symfony/twig-bridge',
     ],

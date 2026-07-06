@@ -71,6 +71,7 @@ services:
 	- TwigStan\Processing\Flattening\TwigFlattener
 	- TwigStan\Processing\ScopeInjection\TwigScopeInjector
 	- TwigStan\Processing\ScopeInjection\ArrayShapeMerger
+	- TwigStan\Processing\ScopeInjection\FormThemeContext
 	- TwigStan\Twig\DependencyFinder
 	- TwigStan\Twig\DependencySorter
 	- TwigStan\Twig\Metadata\MetadataAnalyzer
