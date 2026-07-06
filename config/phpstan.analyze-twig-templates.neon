@@ -11,12 +11,20 @@ parameters:
 		- identifier: method.internal
 		- identifier: staticMethod.internal
 		- identifier: return.internalClass
+		# TwigComponent's ComponentNode instantiates its internal BlockStack in compiled templates
+		-
+			identifier: new.internalClass
+			message: '#Symfony\\UX\\TwigComponent\\BlockStack#'
 services:
 	-
 		class: Twig\Environment
 		factory: @TwigStan\Twig\TwigFactory::create
 	-
 		class: TwigStan\PHPStan\Collector\ContextFromTwigIncludeCallCollector
+		tags:
+			- phpstan.collector
+	-
+		class: TwigStan\PHPStan\Collector\ContextFromComponentRenderCallCollector
 		tags:
 			- phpstan.collector
 	-
@@ -28,6 +36,7 @@ services:
 		tags:
 			- phpstan.parser.richParserNodeVisitor
 	- TwigStan\Processing\Compilation\Parser\TwigNodeParser
+	- TwigStan\Twig\AnonymousComponentTemplateResolver(directory: %twigstan.twigComponentDirectory%)
 	- TwigStan\Twig\TwigFileCanonicalizer
 	- TwigStan\Twig\TwigFactory(environmentLoader: %twigstan.twigEnvironmentLoader%)
 	- TwigStan\Twig\TokenParser\AssertTypeTokenParser

@@ -357,6 +357,11 @@ final class AnalyzeCommand extends Command
             ]),
             IgnoreError::identifier('isset.variable'),
 
+            // The `$context['prop'] ??= default;` statements generated for TwigComponent
+            // `{% props %}` defaults are "pointless" whenever the prop is always (or never)
+            // passed at the usage sites; that is expected, not a template bug.
+            IgnoreError::identifier('nullCoalesce.offset'),
+
             // It's perfectly fine to do `a == b ? 'yes' : 'no'` in Twig.
             IgnoreError::identifier('equal.notAllowed'),
 

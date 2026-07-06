@@ -30,6 +30,7 @@ final readonly class PHPStanRunner
         private string $currentWorkingDirectory,
         private string $tempDirectory,
         private array $twigContextCollectors,
+        private string $twigComponentDirectory,
     ) {}
 
     /**
@@ -77,6 +78,7 @@ final readonly class PHPStanRunner
             'scanDirectories' => $directoriesToAnalyze,
             'twigstan' => [
                 'twigEnvironmentLoader' => $environmentLoader,
+                'twigComponentDirectory' => $this->twigComponentDirectory,
                 'analysisResultJsonFile' => $analysisResultJsonFile,
                 'mode' => $mode->value,
                 'debugMode' => $debugMode,

@@ -6,6 +6,7 @@ parameters:
 parametersSchema:
 	twigstan: structure([
 		twigEnvironmentLoader: string()
+		twigComponentDirectory: string()
 		analysisResultJsonFile: string()
 		mode: string()
 		debugMode: bool()

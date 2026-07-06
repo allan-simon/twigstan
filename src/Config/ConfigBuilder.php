@@ -23,6 +23,7 @@ final class ConfigBuilder
     private ?string $phpstanConfigurationFile = null;
     private null | false | string $phpstanMemoryLimit = null;
     private ?string $twigEnvironmentLoader = null;
+    private string $twigComponentDirectory = 'components';
     private ?string $editorUrl = null;
 
     /**
@@ -136,6 +137,7 @@ final class ConfigBuilder
             $this->phpstanConfigurationFile,
             $this->phpstanMemoryLimit,
             $this->twigEnvironmentLoader,
+            $this->twigComponentDirectory,
             $this->twigPaths,
             $this->twigExcludes,
             array_values(array_unique($this->twigExtensions)),
@@ -285,6 +287,17 @@ final class ConfigBuilder
         }
 
         $this->twigEnvironmentLoader = $twigEnvironmentLoader;
+
+        return $this;
+    }
+
+    /**
+     * The Twig-loader-relative directory where anonymous TwigComponent templates
+     * live; the `anonymous_template_directory` of the twig_component configuration.
+     */
+    public function twigComponentDirectory(string $twigComponentDirectory): self
+    {
+        $this->twigComponentDirectory = $twigComponentDirectory;
 
         return $this;
     }

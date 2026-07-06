@@ -32,6 +32,7 @@ final readonly class TwigStanConfig
         public string $phpstanConfigurationFile,
         public null | false | string $phpstanMemoryLimit,
         public string $twigEnvironmentLoader,
+        public string $twigComponentDirectory,
         public array $twigPaths,
         public array $twigExcludes,
         public array $twigExtensions,

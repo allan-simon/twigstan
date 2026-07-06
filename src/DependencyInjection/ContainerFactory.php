@@ -64,6 +64,7 @@ final readonly class ContainerFactory
             'phpstanConfigurationFile' => $this->configuration->phpstanConfigurationFile,
             'phpstanMemoryLimit' => $this->configuration->phpstanMemoryLimit,
             'twigEnvironmentLoader' => $this->configuration->twigEnvironmentLoader,
+            'twigComponentDirectory' => $this->configuration->twigComponentDirectory,
             'twigPaths' => $this->configuration->twigPaths,
             'twigExcludes' => $this->configuration->twigExcludes,
             'twigExtensions' => $this->configuration->twigExtensions,

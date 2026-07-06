@@ -43,6 +43,7 @@ services:
 		currentWorkingDirectory: %currentWorkingDirectory%
 		tempDirectory: %tempDir%
 		twigContextCollectors: %twigContextCollectors%
+		twigComponentDirectory: %twigComponentDirectory%
 	)
 	- TwigStan\PHP\PrettyPrinter
 	- TwigStan\PHP\StrictPhpParser
