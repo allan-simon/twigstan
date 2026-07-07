@@ -1,0 +1,22 @@
+{
+    "page.twig": [
+        [
+            "Controller.php:17",
+            "array{view: 'groupe'|'liste', transactions: list<int>, movements: list<string>}"
+        ]
+    ],
+    "../Components/components/Panel.html.twig": [
+        [
+            "page.twig:5",
+            "array{}"
+        ],
+        [
+            "page.twig:11",
+            "array{}"
+        ],
+        [
+            "page.twig:20",
+            "array{}"
+        ]
+    ]
+}

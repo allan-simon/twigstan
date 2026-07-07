@@ -28,6 +28,7 @@ use TwigStan\Finder\FilesFinder;
 use TwigStan\Finder\GivenFilesFinder;
 use TwigStan\PHPStan\Analysis\Error;
 use TwigStan\PHPStan\Analysis\PHPStanAnalysisResult;
+use TwigStan\PHPStan\Collector\ComponentEmbedContextCollector;
 use TwigStan\Processing\Compilation\CompilationResultCollection;
 use TwigStan\Processing\Compilation\TwigCompiler;
 use TwigStan\Processing\Flattening\TwigFlattener;
@@ -273,6 +274,12 @@ final class AnalyzeCommand extends Command
 
         $templateContext = $this->templateContextFactory->create($analysisResult);
 
+        // Embedded component contexts captured during the analysis phase, injected
+        // back on the next run (they replace the bootstrap captures), plus the
+        // history of every capture already tried, to guarantee the loop stops.
+        $componentEmbedContext = [];
+        $componentEmbedContextHistory = [];
+
         $run = $this->executeRun(
             $output,
             $errorOutput,
@@ -281,6 +288,7 @@ final class AnalyzeCommand extends Command
             $flatteningDirectory,
             $scopeInjectionDirectory,
             $templateContext,
+            $componentEmbedContext,
             $debugMode,
             $xdebugMode,
         );
@@ -289,6 +297,10 @@ final class AnalyzeCommand extends Command
 
         $changedTemplates = [];
         $templateContext = $templateContext->merge($run->contextAfter, $changedTemplates);
+        $changedTemplates = array_values(array_unique([
+            ...$changedTemplates,
+            ...$this->mergeComponentEmbedContexts($run, $componentEmbedContext, $componentEmbedContextHistory),
+        ]));
 
         $result = $result->withContext($templateContext);
 
@@ -322,6 +334,7 @@ final class AnalyzeCommand extends Command
                 $flatteningDirectory,
                 $scopeInjectionDirectory,
                 $templateContext,
+                $componentEmbedContext,
                 $debugMode,
                 $xdebugMode,
                 ++$runNumber,
@@ -333,6 +346,10 @@ final class AnalyzeCommand extends Command
 
             $changedTemplates = [];
             $templateContext = $templateContext->merge($run->contextAfter, $changedTemplates);
+            $changedTemplates = array_values(array_unique([
+                ...$changedTemplates,
+                ...$this->mergeComponentEmbedContexts($run, $componentEmbedContext, $componentEmbedContextHistory),
+            ]));
 
             $result = $result->withContext($templateContext);
 
@@ -688,6 +705,7 @@ final class AnalyzeCommand extends Command
 
     /**
      * @param list<string> $twigFileNames
+     * @param array<string, array<int, array{sourceLocation: SourceLocation, context: string}>> $componentEmbedContext
      * @param positive-int $run
      * @throws Throwable
      */
@@ -699,6 +717,7 @@ final class AnalyzeCommand extends Command
         string $flatteningDirectory,
         string $scopeInjectionDirectory,
         TemplateContext $templateContext,
+        array $componentEmbedContext,
         bool $debugMode,
         bool $xdebugMode,
         int $run = 1,
@@ -774,6 +793,7 @@ final class AnalyzeCommand extends Command
             $flatteningResults,
             $scopeInjectionDirectory,
             $run,
+            $componentEmbedContext,
         );
 
         $output->writeln('Analyzing templates');
@@ -806,5 +826,66 @@ final class AnalyzeCommand extends Command
                 PHPStanRunMode::AnalyzeTwigTemplates->value => $analysisResult2,
             ],
         );
+    }
+
+    /**
+     * Merges the embedded component contexts captured during the run's analysis
+     * phase into the store injected by the scope injector on the next run.
+     *
+     * During the analysis phase the host blocks have their real `@param`
+     * injected, so the capture at the usage site is complete — including
+     * `{% set %}` variables set before the component. When it differs from what
+     * this run injected, the host template must be recompiled and re-analyzed:
+     * it is returned as changed. Captures already tried before are skipped, so
+     * the fixed-point loop always terminates.
+     *
+     * @param array<string, array<int, array{sourceLocation: SourceLocation, context: string}>> $componentEmbedContext
+     * @param array<string, array<int, list<string>>> $history
+     *
+     * @return list<string>
+     */
+    private function mergeComponentEmbedContexts(TwigStanRun $run, array &$componentEmbedContext, array &$history): array
+    {
+        $changedTemplates = [];
+
+        foreach ($run->phpstanAnalysisResults[PHPStanRunMode::AnalyzeTwigTemplates->value]->collectedData as $data) {
+            if ($data->collecterType !== ComponentEmbedContextCollector::class) {
+                continue;
+            }
+
+            if ( ! $run->scopeInjectionResults->hasPhpFile($data->filePath)) {
+                continue;
+            }
+
+            $scopeInjectionResult = $run->scopeInjectionResults->getByPhpFile($data->filePath);
+
+            // PHPStan aggregates collector results per file: $data->data is a list of
+            // ComponentEmbedContextData node results.
+            foreach ($data->data as $embedData) {
+                /** @var int $embeddedTemplateIndex */
+                $embeddedTemplateIndex = $embedData['embeddedTemplateIndex'];
+                /** @var string $capture */
+                $capture = $embedData['context'];
+
+                // Already what this run injected: the fixed point is reached.
+                if (($scopeInjectionResult->componentEmbedContexts[$embeddedTemplateIndex] ?? null) === $capture) {
+                    continue;
+                }
+
+                // Already tried on an earlier run: don't oscillate.
+                if (in_array($capture, $history[$scopeInjectionResult->twigFilePath][$embeddedTemplateIndex] ?? [], true)) {
+                    continue;
+                }
+
+                $history[$scopeInjectionResult->twigFilePath][$embeddedTemplateIndex][] = $capture;
+                $componentEmbedContext[$scopeInjectionResult->twigFilePath][$embeddedTemplateIndex] = [
+                    'sourceLocation' => SourceLocation::decode($embedData['sourceLocation']),
+                    'context' => $capture,
+                ];
+                $changedTemplates[] = $scopeInjectionResult->twigFilePath;
+            }
+        }
+
+        return array_values(array_unique($changedTemplates));
     }
 }

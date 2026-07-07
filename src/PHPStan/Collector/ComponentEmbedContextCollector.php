@@ -28,17 +28,22 @@ use TwigStan\Twig\SourceLocation;
  * The collected context is injected into the `block_*` methods of the
  * embedded class (suffixed `___35199393592`) by InjectComponentEmbeddedContextVisitor.
  *
- * The collector runs before the block contexts are injected, so when the
+ * The collector runs in two phases. During the block-contexts collect phase
+ * (the bootstrap capture) the block contexts are not injected yet, so when the
  * usage site sits inside a block, the host part of the context is not
- * resolvable yet; `relatedBlockName` records the enclosing block so that
+ * resolvable; `relatedBlockName` records the enclosing block so that
  * TwigScopeInjector can merge its context in, exactly like for regular blocks.
- * Known limitation: variables `{% set %}` inside the block before the usage
- * site are not part of the merged block context (the block placeholder
- * `array{}` makes the in-block flow unresolvable at collect time).
  * When components nest (`<twig:x>` inside the body of another `<twig:y>`),
  * the usage site sits inside a block of the enclosing embedded class;
  * `relatedEmbeddedTemplateIndex` records that class so the enclosing embedded
  * context can be merged in instead.
+ *
+ * During the analysis phase the collector runs again, this time with the real
+ * block `@param` injected: the capture at the usage site is complete — it even
+ * includes `{% set %}` variables set before the component, which the merged
+ * block context cannot see. AnalyzeCommand compares this capture with what the
+ * run injected and, when it differs, feeds it back into the next run, where it
+ * replaces the bootstrap capture (the related* fields are then moot).
  *
  * @phpstan-type ComponentEmbedContextData = array{
  *     embeddedTemplateIndex: int,

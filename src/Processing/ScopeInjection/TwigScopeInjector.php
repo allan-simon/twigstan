@@ -14,6 +14,7 @@ use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\PhpDocParser;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
+use PHPStan\PhpDocParser\Printer\Printer;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
 use TwigStan\PHP\PrettyPrinter;
@@ -66,9 +67,12 @@ final class TwigScopeInjector
     ) {}
 
     /**
+     * The analysis-phase captures are keyed by Twig file and embedded template index.
+     *
      * @param list<CollectedData> $collectedData
+     * @param array<string, array<int, array{sourceLocation: SourceLocation, context: string}>> $componentEmbedContextFromAnalysis
      */
-    public function inject(array $collectedData, FlatteningResultCollection $collection, string $targetDirectory, int $run): ScopeInjectionResultCollection
+    public function inject(array $collectedData, FlatteningResultCollection $collection, string $targetDirectory, int $run, array $componentEmbedContextFromAnalysis = []): ScopeInjectionResultCollection
     {
         $targetDirectory = Path::join($targetDirectory, (string) $run);
 
@@ -122,6 +126,32 @@ final class TwigScopeInjector
                         'relatedEmbeddedTemplateIndex' => $embedData['relatedEmbeddedTemplateIndex'],
                     ];
                 }
+            }
+        }
+
+        // A capture made during the analysis phase of a previous run is strictly
+        // better informed: the host blocks had their real @param injected, so the
+        // context at the usage site was complete (including `{% set %}` variables
+        // set before the component). It replaces the bootstrap capture for the
+        // same embedded template index — one index is one usage site — and its
+        // host part is already complete, so no recursive completion is needed.
+        foreach ($collection as $flatteningResult) {
+            foreach ($componentEmbedContextFromAnalysis[$flatteningResult->twigFilePath] ?? [] as $embeddedTemplateIndex => $capture) {
+                $context = $this->parseArrayShape($capture['context']);
+
+                if ($context === null) {
+                    continue;
+                }
+
+                $componentEmbedContextByFilename[$flatteningResult->phpFile][$embeddedTemplateIndex] = [
+                    'blockName' => null,
+                    'sourceLocation' => $capture['sourceLocation'],
+                    'context' => $context,
+                    'parent' => false,
+                    'relatedBlockName' => null,
+                    'relatedParent' => false,
+                    'relatedEmbeddedTemplateIndex' => null,
+                ];
             }
         }
 
@@ -187,6 +217,10 @@ final class TwigScopeInjector
                 $flatteningResult->twigFilePath,
                 $phpFile,
                 $visitor->getMapping(),
+                array_map(
+                    fn(ArrayShapeNode $context) => (new Printer())->print($context),
+                    $componentEmbedContext[$flatteningResult->phpFile] ?? [],
+                ),
             ));
         }
 

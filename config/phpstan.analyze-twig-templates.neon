@@ -28,6 +28,13 @@ services:
 		tags:
 			- phpstan.collector
 	-
+		# Re-captures the embedded component contexts now that the blocks have
+		# their real @param injected; AnalyzeCommand feeds the captures back
+		# into the next run's scope injection.
+		class: TwigStan\PHPStan\Collector\ComponentEmbedContextCollector
+		tags:
+			- phpstan.collector
+	-
 		class: TwigStan\PHPStan\Rules\GetAttributeRule
 		tags:
 			- phpstan.rules.rule

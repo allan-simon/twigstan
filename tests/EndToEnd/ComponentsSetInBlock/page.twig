@@ -1,0 +1,24 @@
+{% extends 'EndToEnd/ComponentsSetInBlock/layout.twig' %}
+
+{% block main %}
+    {% set is_empty = view == 'groupe' ? transactions is empty : movements is empty %}
+    <twig:Panel>
+        {# A `{% set %}` made in the block before the component flows into its body. #}
+        {% assert_type is_empty 'bool' %}
+        {% assert_type view "'groupe'|'liste'" %}
+        {% if is_empty %}Nothing for the {{ view }} view.{% endif %}
+        {% set inner_label = view == 'groupe' ? 'grouped' : 'flat' %}
+        <twig:Panel>
+            {# Same inside the body of an enclosing component. #}
+            {% assert_type inner_label "'flat'|'grouped'" %}
+            {{ inner_label }}
+        </twig:Panel>
+    </twig:Panel>
+
+    {# The context is captured at the usage site, like at runtime: a variable
+       set after the component does not exist inside its body. #}
+    <twig:Panel>
+        {{ too_late }}
+    </twig:Panel>
+    {% set too_late = 'oops' %}
+{% endblock %}
