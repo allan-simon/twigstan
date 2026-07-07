@@ -3,7 +3,7 @@
 > [Ruud Kamphuis](https://github.com/ruudk). The concept, the architecture and most of the code are
 > his work and that of the upstream contributors (MIT license, © 2024 Ruud Kamphuis).
 >
-> The fork is maintained for the Spotipharm project. On top of upstream `main` it adds:
+> On top of upstream `main` this fork adds:
 >
 > - Compatibility with Symfony 8 and PHP 8.5 ([#277](https://github.com/twigstan/twigstan/issues/277)),
 >   with PHPStan 2.2 (building on [PR #279](https://github.com/twigstan/twigstan/pull/279)) and with
