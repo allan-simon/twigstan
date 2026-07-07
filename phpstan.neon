@@ -25,6 +25,9 @@ parameters:
 		-
 			identifier: method.internal
 			message: '#Twig\\Environment\:\:getTemplateClass\(\)#'
+		-
+			identifier: method.internal
+			message: '#Twig\\Environment\:\:getTokenParsers\(\)#'
 		# Supporting TwigComponent's `<twig:x>` syntax requires consuming its Twig
 		# internals: PropsNode (replaced at compilation) and the lexer/extension pair
 		# that TwigComponentBundle would normally register (tests/twig-loader.php).

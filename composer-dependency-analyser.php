@@ -44,6 +44,7 @@ $config->ignoreErrorsOnPackagesAndPaths(
         'symfony/ux-twig-component',
     ],
     [
+        __DIR__ . '/src/Processing/Compilation/Parser/TwigNodeParser.php',
         __DIR__ . '/src/Processing/Compilation/TwigVisitor/ReplaceComponentPropsNodeVisitor.php',
     ],
     [ErrorType::DEV_DEPENDENCY_IN_PROD],
