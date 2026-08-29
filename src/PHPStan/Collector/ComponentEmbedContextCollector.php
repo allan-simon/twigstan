@@ -8,6 +8,9 @@ use LogicException;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
+use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayShapeUnsealedTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Printer\Printer;
 use PHPStan\Type\Constant\ConstantArrayTypeBuilder;
 use PHPStan\Type\Constant\ConstantStringType;
@@ -141,10 +144,23 @@ final readonly class ComponentEmbedContextCollector implements Collector, Export
             $relatedEmbeddedTemplateIndex = (int) $classMatch['index'];
         }
 
+        $embedContext = $builder->getArray()->toPhpDocNode();
+
+        // When the host context is not a constant array — inside a compiled
+        // `{% for %}`, where PHPStan widens it — its keys are unknown rather than
+        // absent. Sealing the shape there would report every host variable the
+        // embedded body reads as undefined, `{% set %}` variables first.
+        if ($hostContext === null && $embedContext instanceof ArrayShapeNode) {
+            $embedContext = ArrayShapeNode::createUnsealed(
+                $embedContext->items,
+                new ArrayShapeUnsealedTypeNode(new IdentifierTypeNode('mixed'), null),
+            );
+        }
+
         return [
             'embeddedTemplateIndex' => $embeddedTemplateIndexes[0],
             'sourceLocation' => $sourceLocation,
-            'context' => (new Printer())->print($builder->getArray()->toPhpDocNode()),
+            'context' => (new Printer())->print($embedContext),
             'relatedBlockName' => $match['blockName'] ?? null,
             'relatedParent' => ($match['parent'] ?? '') !== '',
             'relatedEmbeddedTemplateIndex' => $relatedEmbeddedTemplateIndex,

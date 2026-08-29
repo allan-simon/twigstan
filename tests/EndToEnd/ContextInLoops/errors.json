@@ -1,0 +1,14 @@
+{
+    "errors": [
+        {
+            "message": "Offset 'missingOffset' does not exist on array{title: string, users: list<TwigStan\\Fixtures\\User>}.",
+            "identifier": "getAttribute.offsetAccess.notFound",
+            "tip": null,
+            "twigSourceLocation": "page.twig:36",
+            "renderPoints": [
+                "Controller.php:17"
+            ]
+        }
+    ],
+    "fileSpecificErrors": []
+}

@@ -1,0 +1,37 @@
+{# Twig compiles a `{% for %}` into a foreach whose key and value targets are
+   offsets of the context array. PHPStan widens what a loop writes to, so the
+   context shape used to degrade to `mixed` at the first loop and stay degraded
+   for the rest of the block. Everything below asserts it no longer does. #}
+
+<h1>{{ heading }}</h1>
+
+{% for group in groups %}
+    {% assert_type group "array{title: string, users: list<TwigStan\\Fixtures\\User>}" %}
+    {% assert_type heading 'string' %}
+
+    <h2>{{ group.title }}</h2>
+
+    {% set label = group.title|upper %}
+
+    <ul>
+        {% for user in group.users %}
+            {# Nested loops keep the element type too. #}
+            {% assert_type user 'TwigStan\\Fixtures\\User' %}
+            {# And a variable set by the enclosing loop is still there. #}
+            {% assert_type label 'string' %}
+            <li>{{ user.name }} — {{ label }}</li>
+        {% endfor %}
+    </ul>
+
+    {# Twig's own loop bookkeeping is not wiped by the narrowing. #}
+    {% if loop.first %}<p>first</p>{% endif %}
+{% endfor %}
+
+{# After the loop, the shape is precise again. #}
+{% assert_type groups "list<array{title: string, users: list<TwigStan\\Fixtures\\User>}>" %}
+{% assert_type heading 'string' %}
+
+{% for group in groups %}
+    {# What the widening used to hide: an offset that does not exist. #}
+    {{ group.missingOffset }}
+{% endfor %}
